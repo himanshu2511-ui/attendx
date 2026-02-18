@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
 import { createClassroomSchema } from "@/lib/validations";
 import { nanoid } from "nanoid";
 import QRCode from "qrcode";
