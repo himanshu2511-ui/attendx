@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
 import { loginSchema } from "@/lib/validations";
 import bcrypt from "bcryptjs";
 
