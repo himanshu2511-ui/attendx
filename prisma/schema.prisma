@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  username     String   @unique
+  email        String   @unique
+  passwordHash String?
+  role         String   @default("STUDENT")
+  rollNo       String?
+  createdAt    DateTime @default(now())
+
+  classrooms    Classroom[]        @relation("EducatorClassrooms")
+  enrolled      ClassroomStudent[]
+  timetables    Timetable[]
+  attendances   Attendance[]
+  liveAttendees LiveAttendee[]
+}
+
+model Classroom {
+  id           String   @id @default(uuid())
+  name         String
+  subject      String
+  classCode    String   @unique
+  joinLink     String
+  qrCodeUrl    String?
+  educatorId   String
+  studentCount Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  educator       User               @relation("EducatorClassrooms", fields: [educatorId], references: [id])
+  students       ClassroomStudent[]
+  liveSessions   LiveSession[]
+  timetableSlots TimetableSlot[]
+}
+
+model ClassroomStudent {
+  id          String    @id @default(uuid())
+  classroomId String
+  studentId   String
+  status      String    @default("PENDING")
+  joinedAt    DateTime?
+
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  student   User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([classroomId, studentId])
+}
+
+model LiveSession {
+  id              String    @id @default(uuid())
+  classroomId     String
+  startTime       DateTime  @default(now())
+  endTime         DateTime?
+  status          String    @default("SCHEDULED")
+  portalOpen      Boolean   @default(false)
+  portalDuration  Int       @default(5)
+  portalCloseTime DateTime?
+  admittedCount   Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  classroom   Classroom      @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  attendees   LiveAttendee[]
+  attendances Attendance[]
+}
+
+model LiveAttendee {
+  id               String    @id @default(uuid())
+  liveSessionId    String
+  studentId        String
+  admittedAt       DateTime?
+  attendanceCalled Boolean   @default(false)
+  calledAt         DateTime?
+  attendanceStatus String    @default("PENDING")
+
+  liveSession LiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+  student     User        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([liveSessionId, studentId])
+}
+
+model Attendance {
+  id            String   @id @default(uuid())
+  liveSessionId String
+  studentId     String
+  status        String   @default("ABSENT")
+  markedAt      DateTime @default(now())
+
+  liveSession LiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+  student     User        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([liveSessionId, studentId])
+}
+
+model Timetable {
+  id     String  @id @default(uuid())
+  userId String
+  name   String?
+
+  user  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slots TimetableSlot[]
+}
+
+model TimetableSlot {
+  id            String  @id @default(uuid())
+  timetableId   String
+  day           String
+  startTime     String
+  endTime       String
+  subject       String
+  classroomId   String?
+  isBreak       Boolean @default(false)
+  breakDuration Int?
+
+  timetable Timetable  @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+  classroom Classroom? @relation(fields: [classroomId], references: [id])
+}
